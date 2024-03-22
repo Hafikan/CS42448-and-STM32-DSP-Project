@@ -9,7 +9,12 @@
 #include "stm32f3xx_hal.h"
 
 HAL_StatusTypeDef Codec_IsReady(Codec_Typedef * codec){
+
 	HAL_StatusTypeDef device_is_ready;
+	GPIO_PinState CDIN_Pin, CS_Pin;
+
+	CDIN_Pin = HAL_GPIO_ReadPin(codec->Codec_CDIN_Pin_Port, codec->Codec_CDIN_Pin);
+	CS_Pin = HAL_GPIO_ReadPin(codec->Codec_CS_Pin_Port, codec->Codec_CS_Pin);
 	device_is_ready = HAL_I2C_IsDeviceReady(&codec->i2c_port, codec->CHIP_ADDRESS, codec->Trials, codec->Timeout);
 	return device_is_ready;
 }
@@ -19,7 +24,6 @@ HAL_StatusTypeDef PowerDownEnable(Codec_Typedef * codec){
 	unsigned short int enable_data_buffer[2] = {0xFF};
 	HAL_StatusTypeDef is_write = HAL_I2C_Mem_Write(&codec->i2c_port,codec->CHIP_ADDRESS, 0x02, I2C_MEMADD_SIZE_8BIT, enable_data_buffer, 1, codec->Timeout);
 	HAL_Delay(codec->Timeout);
-
 	return is_write;
 }
 HAL_StatusTypeDef PowerDownDisable(Codec_Typedef * codec){
@@ -27,8 +31,7 @@ HAL_StatusTypeDef PowerDownDisable(Codec_Typedef * codec){
 	unsigned short int disable_data_buffer[2] = {0x00};
 	HAL_StatusTypeDef is_write = HAL_I2C_Mem_Write(&codec->i2c_port,codec->CHIP_ADDRESS, 0x02, I2C_MEMADD_SIZE_8BIT, disable_data_buffer, 1, codec->Timeout);
 	HAL_Delay(codec->Timeout);
-	HAL_GPIO_WritePin(codec->Codec_Reset_Pin_Port, codec->Codec_Reset_Pin, GPIO_PIN_RESET);
-	HAL_Delay(codec->Timeout);
+
 	return is_write;
 }
 HAL_StatusTypeDef MuteAdc(Codec_Typedef * codec){
@@ -45,7 +48,7 @@ HAL_StatusTypeDef HandleRegisters(Codec_Typedef * codec,uint8_t register_address
 }
 
 HAL_StatusTypeDef SetI2SInterface(Codec_Typedef * codec){
-	uint8_t ic_d_buffer[2]={137};
+	uint8_t ic_d_buffer[2]={201};
 	uint8_t ic_d_buffer1[2]={73};
 	HAL_StatusTypeDef is_write =HAL_I2C_Mem_Write(&codec->i2c_port,codec->CHIP_ADDRESS, 0x04, I2C_MEMADD_SIZE_8BIT, ic_d_buffer, 1,codec->Timeout);
 	HAL_Delay(codec->Timeout);

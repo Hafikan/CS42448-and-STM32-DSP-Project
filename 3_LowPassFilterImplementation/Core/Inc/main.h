@@ -59,6 +59,10 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define CODEC_RST_Pin GPIO_PIN_6
 #define CODEC_RST_GPIO_Port GPIOA
+#define CODEC_CS_Pin GPIO_PIN_8
+#define CODEC_CS_GPIO_Port GPIOB
+#define CODEC_CDIN_Pin GPIO_PIN_9
+#define CODEC_CDIN_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 

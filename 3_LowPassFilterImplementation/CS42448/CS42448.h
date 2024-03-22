@@ -16,6 +16,10 @@ typedef struct{
 	uint8_t Trials;
 	GPIO_TypeDef* Codec_Reset_Pin_Port;
 	uint16_t Codec_Reset_Pin;
+	uint16_t Codec_CDIN_Pin;
+	uint16_t Codec_CDIN_Pin_Port;
+	uint16_t Codec_CS_Pin;
+	uint16_t Codec_CS_Pin_Port;
 
 
 }Codec_Typedef;

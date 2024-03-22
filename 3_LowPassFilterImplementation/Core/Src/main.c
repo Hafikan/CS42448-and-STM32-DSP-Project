@@ -31,19 +31,19 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define BUFFER_SIZE 1024
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-uint8_t power_disable_buffer[10] = {0xFF};
-uint8_t power_enable_buffer[10] = {0X00};
+
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
 I2C_HandleTypeDef hi2c2;
 
 I2S_HandleTypeDef hi2s3;
+DMA_HandleTypeDef hdma_spi3_rx;
 
 /* USER CODE BEGIN PV */
 Codec_Typedef cs42448;
@@ -52,9 +52,11 @@ Codec_Typedef cs42448;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
+static void MX_DMA_Init(void);
 static void MX_I2C2_Init(void);
 static void MX_I2S3_Init(void);
 /* USER CODE BEGIN PFP */
+int16_t codec_buffer[BUFFER_SIZE];
 
 /* USER CODE END PFP */
 
@@ -91,6 +93,7 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_I2C2_Init();
   MX_I2S3_Init();
   /* USER CODE BEGIN 2 */
@@ -102,7 +105,7 @@ int main(void)
   SetADCMode(&cs42448);
   HandleRegisters(&cs42448,0x05);// Check ADC Mode
   PowerDownDisable(&cs42448);
-
+  HAL_I2S_Receive_DMA(&hi2s3, (uint16_t *)codec_buffer, BUFFER_SIZE);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -112,7 +115,6 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	  LedControl(&cs42448);
   }
   /* USER CODE END 3 */
 }
@@ -230,7 +232,7 @@ static void MX_I2S3_Init(void)
   hi2s3.Instance = SPI3;
   hi2s3.Init.Mode = I2S_MODE_MASTER_RX;
   hi2s3.Init.Standard = I2S_STANDARD_PHILIPS;
-  hi2s3.Init.DataFormat = I2S_DATAFORMAT_24B;
+  hi2s3.Init.DataFormat = I2S_DATAFORMAT_16B_EXTENDED;
   hi2s3.Init.MCLKOutput = I2S_MCLKOUTPUT_ENABLE;
   hi2s3.Init.AudioFreq = I2S_AUDIOFREQ_8K;
   hi2s3.Init.CPOL = I2S_CPOL_LOW;
@@ -243,6 +245,22 @@ static void MX_I2S3_Init(void)
   /* USER CODE BEGIN I2S3_Init 2 */
 
   /* USER CODE END I2S3_Init 2 */
+
+}
+
+/**
+  * Enable DMA controller clock
+  */
+static void MX_DMA_Init(void)
+{
+
+  /* DMA controller clock enable */
+  __HAL_RCC_DMA2_CLK_ENABLE();
+
+  /* DMA interrupt init */
+  /* DMA2_Channel1_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA2_Channel1_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA2_Channel1_IRQn);
 
 }
 
@@ -261,6 +279,7 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOF_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOC_CLK_ENABLE();
+  __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(CODEC_RST_GPIO_Port, CODEC_RST_Pin, GPIO_PIN_RESET);
@@ -271,6 +290,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(CODEC_RST_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : CODEC_CS_Pin CODEC_CDIN_Pin */
+  GPIO_InitStruct.Pin = CODEC_CS_Pin|CODEC_CDIN_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */
@@ -284,6 +309,10 @@ void MX_CODEC_Init(void){
 	cs42448.Trials = 3;
 	cs42448.Codec_Reset_Pin = CODEC_RST_Pin;
 	cs42448.Codec_Reset_Pin_Port = CODEC_RST_GPIO_Port;
+	cs42448.Codec_CDIN_Pin = CODEC_CDIN_Pin;
+	cs42448.Codec_CDIN_Pin_Port = CODEC_CDIN_GPIO_Port;
+	cs42448.Codec_CS_Pin = CODEC_CS_Pin;
+	cs42448.Codec_CS_Pin_Port = CODEC_CS_GPIO_Port;
 }
 /* USER CODE END 4 */
 
