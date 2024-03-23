@@ -67,7 +67,27 @@ HAL_StatusTypeDef SetADCMode(Codec_Typedef * codec){
 
 
 }
+HAL_StatusTypeDef InVolumeControl(Codec_Typedef * codec, uint8_t in_ch_register_addr){
+	HAL_StatusTypeDef is_write = HAL_BUSY;
+	uint8_t vol[2] = {0b01110000};
+	is_write = HAL_I2C_Mem_Write(&codec->i2c_port, codec->CHIP_ADDRESS, in_ch_register_addr, I2C_MEMADD_SIZE_8BIT, vol, 1, codec->Timeout);
+	HAL_Delay(codec->Timeout);
+	return is_write;
+}
+void Filter_Init(EMA_LPF * filter, float alpha){
+	Filter_SetAlpha(filter, alpha);
+	filter->filtered_signal = 0.0f;
 
+
+}
+void Filter_SetAlpha(EMA_LPF * filter, float alpha){
+	filter->alpha = alpha;
+
+}
+float Filter_Update(EMA_LPF * filter, float input){
+	filter->filtered_signal = filter->alpha * input + (1-filter->alpha)*filter->filtered_signal;
+	return filter->filtered_signal;
+}
 void LedControl(Codec_Typedef * codec){
 
 	HAL_GPIO_TogglePin(codec->Codec_Reset_Pin_Port, codec->Codec_Reset_Pin);

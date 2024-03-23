@@ -47,6 +47,7 @@ DMA_HandleTypeDef hdma_spi3_rx;
 
 /* USER CODE BEGIN PV */
 Codec_Typedef cs42448;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -56,7 +57,11 @@ static void MX_DMA_Init(void);
 static void MX_I2C2_Init(void);
 static void MX_I2S3_Init(void);
 /* USER CODE BEGIN PFP */
-int16_t codec_buffer[BUFFER_SIZE];
+static volatile int16_t codec_buffer[BUFFER_SIZE];
+static volatile int16_t codec_buffer_r[BUFFER_SIZE/2];
+static volatile int16_t codec_buffer_l[BUFFER_SIZE/2];
+static volatile int16_t filter_out_buffer_r[BUFFER_SIZE];
+
 
 /* USER CODE END PFP */
 
@@ -98,6 +103,7 @@ int main(void)
   MX_I2S3_Init();
   /* USER CODE BEGIN 2 */
   MX_CODEC_Init();
+
   PowerDownEnable(&cs42448);
   Codec_IsReady(&cs42448);
   SetI2SInterface(&cs42448);
@@ -105,6 +111,7 @@ int main(void)
   SetADCMode(&cs42448);
   HandleRegisters(&cs42448,0x05);// Check ADC Mode
   PowerDownDisable(&cs42448);
+
   HAL_I2S_Receive_DMA(&hi2s3, (uint16_t *)codec_buffer, BUFFER_SIZE);
   /* USER CODE END 2 */
 
@@ -309,10 +316,24 @@ void MX_CODEC_Init(void){
 	cs42448.Trials = 3;
 	cs42448.Codec_Reset_Pin = CODEC_RST_Pin;
 	cs42448.Codec_Reset_Pin_Port = CODEC_RST_GPIO_Port;
-	cs42448.Codec_CDIN_Pin = CODEC_CDIN_Pin;
-	cs42448.Codec_CDIN_Pin_Port = CODEC_CDIN_GPIO_Port;
-	cs42448.Codec_CS_Pin = CODEC_CS_Pin;
-	cs42448.Codec_CS_Pin_Port = CODEC_CS_GPIO_Port;
+
+}
+void HAL_I2S_RxCpltCallback(I2S_HandleTypeDef *hi2s){
+
+	for(int i=0;i<BUFFER_SIZE;i++){
+		if(i % 2 == 0){
+			codec_buffer_r[i/2] = codec_buffer[i];
+
+		}
+		else{
+			codec_buffer_l[i/2] = codec_buffer[i];
+		}
+
+	}
+
+
+	HAL_I2S_Receive_DMA(&hi2s3, (uint16_t *)codec_buffer, BUFFER_SIZE);
+
 }
 /* USER CODE END 4 */
 
