@@ -8,7 +8,6 @@
 
 #include <inttypes.h>
 #include "stm32f3xx_hal.h"
-#include "main.h"
 #ifndef CS42448_HPP_
 #define CS42448_HPP_
 
@@ -26,11 +25,7 @@ typedef struct{
 
 
 }Codec_Typedef;
-typedef struct {
-	float alpha;
-	float filtered_signal;
 
-}EMA_LPF;
 
 HAL_StatusTypeDef Codec_IsReady(Codec_Typedef * codec);
 HAL_StatusTypeDef PowerDownEnable(Codec_Typedef * codec);
@@ -40,32 +35,8 @@ HAL_StatusTypeDef HandleRegisters(Codec_Typedef * codec,uint8_t register_address
 HAL_StatusTypeDef SetI2SInterface(Codec_Typedef * codec);
 HAL_StatusTypeDef SetADCMode(Codec_Typedef * codec);
 HAL_StatusTypeDef InVolumeControl(Codec_Typedef * codec, uint8_t in_ch_register_addr);
-void Filter_Init(EMA_LPF * filter, float alpha);
-void Filter_SetAlpha(EMA_LPF * filter, float alpha);
-float Filter_Update(EMA_LPF * filter, float input);
+
 void LedControl(Codec_Typedef * codec);
-}
-namespace LowPassFilter{
-	template <int order> class LPF{
-	private:
-		float a[order];
-		float b[order+1];
-		float omega0;
-		float dt;
-		bool adapt;
-		float tn1 = 0;
-		float x[order+1]; // Raw values
-		float y[order+1]; // Filtered values
-		__STATIC_INLINE void DWT_Init(void);
-		__STATIC_INLINE void delay_us(uint32_t us);
-		__STATIC_INLINE uint32_t micros(void);
-
-	public:
-		LPF(float f0, float fs, bool adaptive);
-		void setCoef();
-		float filt(float xn);
-	};
-
 
 }
 
